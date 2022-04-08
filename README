@@ -1,0 +1,59 @@
+Resql Database System and Flounder Library
+
+Authors: Henning Funke <henning.funke@cs.tu-dortmund.de>
+         Jan Mühlig <jan.muehlig@tu-dortmund.de>
+
+Query compilation-based database system with low compilation times.
+
+Build
+  First make sure that the libraries and tools are available.  
+  Then use 'make' in this folder. Developed and tested under 
+  Ubuntu 18.04. For debug builds use 'make DEBUG=1'. To run 
+  tests use 'make run-tests'.
+
+Libraries
+  flex           needs to be installed, e.g. via apt
+  libreadline    needs to be installed, e.g. via apt
+  asmjit         source included, build with cmake in lib/asmjit
+  lemon          source included, no build necessary
+  cereal         source included, no build necessary
+  cxxopts        source included, no build necessary
+
+Other tools
+  nasm           assembler
+  clang          c++ compiler
+
+Run
+  ReSQL runs either in interactive or client/server mode. Use './resql -h'
+  for instructions. If the file startup.sql exists in this folder, ReSQL 
+  will execute it at the start of the server (or standalone). A startup 
+  file with the following commands, for example, will load a sample 
+  database (10 MB).
+
+    showplan=true;
+    exec tpch/create.sql;
+    exec tpch/load_sf001.sql;
+
+Commands
+  showfln=true   show Flounder IR
+  showasm=true   show machine assembly
+  showperf=true  show performance measurements
+  tables         show tables from current database
+  emitmc=true    assemble via asmjit
+  emitmc=false   assemble via nasm
+  tofile=true    write query results to file
+                 qres.tbl (server)
+  exec file.sql  execute file with SQL statements 
+                 separated by ';'
+  select *       execute SQL
+  q or exit      quit
+
+ 
+ReSQL understands the following commands
+  create table name ( name1 type1, name2 type2 )
+  bulk insert name from "path/foo.tbl" with ( fieldterminator="|" )
+  select c,avg(d*a) from foo,bar where a=d group by c order by c
+
+Known Issues
+  - Memory for Expr ist not freed.
+  - "warning: unused variable 'query'"
