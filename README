@@ -49,7 +49,7 @@ Commands
   q or exit      quit
 
  
-ReSQL understands the following commands
+ReSQL understands the following commands (for example)
   create table name ( name1 type1, name2 type2 )
   bulk insert name from "path/foo.tbl" with ( fieldterminator="|" )
   select c,avg(d*a) from foo,bar where a=d group by c order by c
