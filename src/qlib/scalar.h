@@ -1,6 +1,6 @@
 /**
  * @file
- * Hash table implementation.
+ * scalar operations on attributes
  * @author Henning Funke <henning.funke@cs.tu-dortmund.de>
  */
 #include "error.h"
