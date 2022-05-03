@@ -605,6 +605,12 @@ namespace ExprGen {
         return e;
     }
     
+    Expr* attr ( Attribute& a ) {
+        Expr* e = literalExpr ( Expr::ATTRIBUTE, a.name );
+	e->type = a.type;
+        return e;
+    }
+    
     Expr* typecast ( SqlType type, Expr* child ) {
         Expr* e = unaryExpr ( Expr::TYPECAST, "typecast", child );
         e->type = type;
@@ -1161,7 +1167,13 @@ void deriveExpressionTypesLiteral ( Expr*                             e,
      * dont have the identTypes types available.        *
      *                                                  *
      * We add this to allow calling safely.             */
-    if ( e->type.tag != SqlType::NT ) return;
+
+    if ( e->type.tag != SqlType::NT ) {
+	if ( e->tag == Expr::ATTRIBUTE ) {
+	    identTypes[e->symbol] = e->type;
+	}
+	return;
+    }
 
     switch ( e->tag ) {
 

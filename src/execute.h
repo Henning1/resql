@@ -218,8 +218,11 @@ std::unique_ptr < SelectResult >  executeSelectPlan ( RelOperator*  root,
     if ( config.showPlan ) {
         root->print ( plan );
     }
+
+    ExpressionContext exprCtx;
+    root->defineExpressionsForPlan ( exprCtx );
     std::map <std::string, SqlType> identifiers = mapIdentifierTypes ( db );
-    root->defineExpressionsForPlan ( identifiers );
+    exprCtx.deriveExpressionTypes ( identifiers );
     JitContextFlounder ctx ( config.jit );
     ctx.requestAll = requestAll;
     try {

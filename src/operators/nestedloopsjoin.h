@@ -31,9 +31,9 @@ public:
     virtual ~NestedLoopsJoinOp() {}
     
 
-    virtual void defineExpressions ( std::map <std::string, SqlType>&  identTypes ) {
+    void defineExpressions ( ExpressionContext& ctx ) {
         if ( _condition != nullptr ) {
-            deriveExpressionTypes ( _condition, identTypes );
+	    ctx.define ( _condition );
         }
     }
 

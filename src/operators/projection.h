@@ -32,18 +32,14 @@ public:
     }
     
 
-    virtual void defineExpressions ( std::map <std::string, SqlType>&  identTypes ) {
-        if ( _child != nullptr ) {
-            //_child->defineExpressions ( identTypes );
-        }
-        deriveExpressionTypes ( _expr, identTypes );
+    void defineExpressions ( ExpressionContext& ctx ) {
+	ctx.define ( _expr );
     }
    
  
     virtual void produceFlounder ( JitContextFlounder& ctx, 
                                    SymbolSet           request ) {
 
-        
         /* Projection with children */
         if ( _child != nullptr ) {
             SymbolSet req = extractRequiredAttributes ( _expr );

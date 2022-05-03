@@ -18,6 +18,40 @@
 ir_node* emitExpression ( JitContextFlounder& ctx, Expr* expr );
 
 
+struct ExpressionContext {
+
+    /* all expressions from the query plan in execution order */
+    std::vector<Expr*> _expressions;
+
+    /* required table attributes */
+    SymbolSet _required;
+
+    
+    void define ( Expr* e ) {
+        _expressions.push_back ( e );
+        SymbolSet req = extractRequiredAttributes ( e ); 
+        _required = symbolSetUnion ( _required, req );
+    }
+    
+    void define ( std::vector < Expr* > es ) {
+        for ( auto& e : es ) { 
+            define ( e );
+	}
+    }
+
+    bool isRequired ( std::string ident ) {
+        return _required.find ( ident ) != _required.end();
+    }
+
+    void deriveExpressionTypes( std::map <std::string, SqlType>&  identTypes ) {
+        for ( auto& e : _expressions ) { 
+            ::deriveExpressionTypes ( e, identTypes ); 
+	}
+    }
+};
+
+
+
 /***  Constant  ***/
 
 ir_node* emitConstantDECIMAL ( JitContextFlounder&  ctx, 

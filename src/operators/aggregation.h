@@ -52,11 +52,11 @@ public:
     };
     
 
-    virtual void defineExpressions ( std::map <std::string, SqlType>&  identTypes ) {
+    void defineExpressions ( ExpressionContext& ctx ) {
         _splitAggExpr = splitAverages ( _aggExpr );
-        deriveExpressionTypes ( _groupExpr, identTypes );
-        deriveExpressionTypes ( _splitAggExpr, identTypes );
-        deriveExpressionTypes ( _aggExpr, identTypes );
+	ctx.define ( _groupExpr );
+	ctx.define ( _splitAggExpr );
+	ctx.define ( _aggExpr );
     }
 
     

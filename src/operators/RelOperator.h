@@ -12,6 +12,7 @@
 
 
 class JitContextFlounder;
+struct ExpressionContext;
 
 
 /**
@@ -162,7 +163,7 @@ public:
     /*
      * Flounder JIT interface
      */
-    virtual void defineExpressions ( std::map <std::string, SqlType>& identTypes ) = 0;
+    virtual void defineExpressions ( ExpressionContext& ctx ) = 0;
     virtual void produceFlounder ( JitContextFlounder& ctx, SymbolSet request ) = 0;
     virtual void consumeFlounder ( JitContextFlounder& ctx ) = 0;
     
@@ -199,11 +200,11 @@ public:
     } 
 
 
-    void defineExpressionsForPlan ( std::map <std::string, SqlType>&  identTypes ) {
+    void defineExpressionsForPlan ( ExpressionContext& ctx ) {
         for ( auto& c : this->children ) {
-            c->defineExpressionsForPlan ( identTypes );
+            c->defineExpressionsForPlan ( ctx );
         }
-        this->defineExpressions ( identTypes );
+        this->defineExpressions ( ctx );
     }
     
     

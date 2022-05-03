@@ -152,6 +152,8 @@ public:
     Relation::ReadIterator _readIt;
     DataBlock* _currentBlock = nullptr;
 
+    ExprVec _scanExpr;
+
     virtual std::string name() { 
         std::string name;
         if ( relationName.length() == 0 ) name = "Scan";
@@ -179,7 +181,15 @@ public:
     virtual ~ScanOp() {}
     
 
-    virtual void defineExpressions ( std::map <std::string, SqlType>&  identTypes ) {}
+    void defineExpressions ( ExpressionContext& ctx ) {
+
+        for ( auto& a : _rel->_schema._attribs ) {
+            if ( ctx.isRequired ( a.name ) ) {
+                _scanExpr.push_back ( ExprGen::attr ( a ) );
+            }
+	}
+	ctx.define ( _scanExpr );
+    }
 
     
     virtual size_t getSize () {

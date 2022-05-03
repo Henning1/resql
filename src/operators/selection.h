@@ -26,8 +26,8 @@ public:
     virtual ~SelectionOp() {};
     
 
-    virtual void defineExpressions ( std::map <std::string, SqlType>&  identTypes ) {
-        deriveExpressionTypes ( _condition, identTypes );
+    void defineExpressions ( ExpressionContext& ctx ) {
+	ctx.define ( _condition );
     }
 
     
