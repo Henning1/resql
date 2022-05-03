@@ -91,7 +91,7 @@ all: resql test-resql
 
 resql: ${resql-files} ${flounder-files} resql-parser.o
 	clang++ ${args} ${include-dirs} -Llib/asmjit -lasmjit \
-            -L/usr/share -lreadline -Wl,--export-dynamic,-R./asmjit \
+            -L/usr/share -lreadline -Wl,--export-dynamic,-R./lib/asmjit \
             src/resql.cpp -o resql resql-parser.o -ll 
 
 resql-parser.o: ${resql-parser-files}
@@ -102,7 +102,7 @@ resql-parser.o: ${resql-parser-files}
 
 test-resql: ${resql-test-files} ${resql-files} resql-parser.o
 	clang++ ${args} ${include-dirs} -Isrc/ -Llib/asmjit -lasmjit test/test.cpp \
-        -Wl,--export-dynamic,-R./asmjit -o test-resql resql-parser.o -ll
+        -Wl,--export-dynamic,-R./lib/asmjit -o test-resql resql-parser.o -ll
 
 run-tests: test-resql
 	./test-resql
