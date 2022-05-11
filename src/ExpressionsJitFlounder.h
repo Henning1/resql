@@ -18,6 +18,174 @@
 ir_node* emitExpression ( JitContextFlounder& ctx, Expr* expr );
 
 
+struct UniqueExpr {
+
+    bool _printed = false;
+
+    UniqueExpr ( Expr* e ) : first ( e ) {
+        uses.push_back ( e );
+    }
+
+    void addUse ( Expr* e ) {
+        uses.push_back ( e );
+    }
+
+    Expr* first;
+
+    std::vector<Expr*> uses;
+};
+
+
+struct ExpressionContext {
+
+    /* all expressions from the query plan in execution order */
+    std::vector<Expr*> _expressions;
+
+    /* required table attributes */
+    SymbolSet _required;
+
+    /* set of unique expresseions */
+    std::vector<std::unique_ptr<UniqueExpr>> _uniqueExpressions;
+
+    /* map from expressions to unique expressions (non-owning) */
+    std::map<Expr*, UniqueExpr*> _uniqueMap;
+    
+    void define ( Expr* e ) {
+        _expressions.push_back ( e );
+        SymbolSet req = extractRequiredAttributes ( e ); 
+        _required = symbolSetUnion ( _required, req );
+    }
+    
+    void define ( std::vector < Expr* > es ) {
+        for ( auto& e : es ) { 
+            define ( e );
+        }
+    }
+
+    bool isRequired ( std::string ident ) {
+        return _required.find ( ident ) != _required.end();
+    }
+
+    void deriveExpressionTypes ( std::map <std::string, SqlType>&  identTypes ) {
+        for ( auto& e : _expressions ) { 
+            ::deriveExpressionTypes ( e, identTypes ); 
+	    }
+    }
+
+    void show() {
+        std::cout << std::endl << " -- Expressions -- " << std::endl;
+        int i=0;
+        for ( auto& e : _expressions ) { 
+	        std::cout << i << ": " << ::serializeExpr ( e ) << std::endl;
+            i++;
+        }
+        
+        std::cout << std::endl << " -- Unique Expressions -- " << std::endl;
+        i=0;
+        for ( auto& e : _expressions ) { 
+	        std::cout << i << ": " << serializeExprUnique ( e ) << std::endl;
+            i++;
+	    }
+    }
+
+    void unifyExpressions() {
+        for ( auto& e : _expressions ) { 
+            unifyExpression ( e );
+        }
+    }
+
+    void unifyExpression ( Expr* e ) {
+
+        // sarch in unique expression
+        bool found = false;
+        UniqueExpr* unique = nullptr;
+
+        for ( auto& u : _uniqueExpressions ) {
+            // found: reference unique expression       
+            if ( traceMatch ( e, u->first ) ) {
+                u->addUse ( e );
+                unique = u.get();
+                found = true;
+            }
+        }
+
+        // not found: insert
+        if ( !found ) {
+            _uniqueExpressions.emplace_back ( new UniqueExpr ( e ) );
+            unique = _uniqueExpressions.back().get();
+        }
+
+        if ( unique == nullptr ) std::cout << "Oh Snap! unique null" << std::endl;
+
+        // assign unique expression responsible for expression
+        _uniqueMap[e] = unique;
+        
+        Expr* child = e->child;
+        while ( child != nullptr ) {
+            unifyExpression ( child );
+            child = child->next; 
+        }
+    }
+
+    void showMap() {
+        for (auto& x : _uniqueExpressions) {
+            std::cout << " -- vec entry -- " << std::endl;
+            std::cout << "unique address: " << &x << std::endl;
+            std::cout << "unique size: " << x->uses.size() << std::endl;
+            std::cout << "expr: " << ::serializeExpr ( x->first ) << std::endl;
+        }
+        for (auto& x : _uniqueMap) {
+            std::cout << " -- map entry -- " << std::endl;
+            std::cout << "unique address: " << x.second << std::endl;
+            std::cout << "expr: " << ::serializeExpr ( x.first ) << std::endl;
+            std::cout << "unique size: " << x.second->uses.size() << std::endl;
+        }
+    }
+
+    std::string serializeExprUnique ( Expr* e ) {
+        UniqueExpr* u = _uniqueMap[e];
+
+        if ( _uniqueMap.find ( e ) == _uniqueMap.end() ) {
+            std::cout << "key not found" << std::endl;
+        }
+        e = u->first;
+
+        std::stringstream ss;
+        ss << "{";
+        if ( u->_printed ) {
+            ss << "-";
+        }
+        else {
+            ss << exprTagNames [e->tag] 
+               << ","
+               << serializeType ( e->type )
+               << ","
+               << e->symbol;
+
+            switch ( e->tag ) { 
+                case Expr::CONSTANT:
+                    ss << ","
+                       << serializeSqlValue ( e->value, e->type );
+                    break;
+                default:
+                    // nothing to do
+                    break;
+            }
+            u->_printed = true;
+        }
+        Expr* ch = e->child; 
+        while ( ch != nullptr ) {
+            ss << ","
+               << serializeExprUnique ( ch );
+            ch = ch->next;
+        }  
+        ss << "}"; 
+        return ss.str();
+    }
+};
+
+
+
 /***  Constant  ***/
 
 ir_node* emitConstantDECIMAL ( JitContextFlounder&  ctx, 

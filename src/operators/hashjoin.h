@@ -1,4 +1,4 @@
-//#include <latch>
+#include <latch>
 
 
 
@@ -6,14 +6,14 @@ struct HashJoinState {
 
 
     /* synchronization point after build is finished */
-    //std::latch _syncPointBuild;
+    std::latch _syncPointBuild;
 
   
-    HashJoinState ( size_t numThreads ) /* : _syncPointBuild ( numThreads )*/ {} 
+    HashJoinState ( size_t numThreads ) : _syncPointBuild ( numThreads ) {} 
 
 
     static void syncBuild ( HashJoinState* state ) {
-        //state->_syncPointBuild.arrive_and_wait();
+        state->_syncPointBuild.arrive_and_wait();
     }
 
 };
@@ -67,7 +67,6 @@ public:
     /* state that concerns the hashjoin during execution */
     std::unique_ptr < HashJoinState > _state;
 
-    
 
     virtual std::string name() { return "HashJoin"; };
 
@@ -89,8 +88,8 @@ public:
     }
     
 
-    virtual void defineExpressions ( std::map <std::string, SqlType>&  identTypes ) {
-        deriveExpressionTypes ( _equalities, identTypes );
+    void defineExpressions ( ExpressionContext& ctx ) {
+	ctx.define ( _equalities );
     }
 
     

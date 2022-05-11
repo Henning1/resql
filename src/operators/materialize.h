@@ -34,10 +34,10 @@ public:
             _nCall ( 0 ), _hasLimitClause ( false ) {
         
         addChild ( child );
-    };
+    }
     
 
-    virtual void defineExpressions ( std::map <std::string, SqlType>&  identTypes ) {};
+    void defineExpressions ( ExpressionContext& ctx) {}
     
 
     virtual bool isMaterializedOperator() {

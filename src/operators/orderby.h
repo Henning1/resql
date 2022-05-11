@@ -35,7 +35,7 @@ public:
     std::string name() { return "OrderBy"; }
     
 
-    virtual void defineExpressions ( std::map <std::string, SqlType>&  identTypes ) {
+    void defineExpressions ( ExpressionContext& ctx ) {
 
         /* add ASC if unspecified */ 
         for ( size_t i=0; i < _orderExpressions.size(); i++) {
@@ -52,7 +52,7 @@ public:
             }
         }
 
-        deriveExpressionTypes ( _orderExpressions, identTypes );
+        ctx.define ( _orderExpressions );
     }
   
   
