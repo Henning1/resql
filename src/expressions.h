@@ -131,6 +131,48 @@ const char* exprTagNames[] {
 };
 
 
+bool exprEquals ( Expr* a, Expr* b ) {
+
+    if ( a->tag != b->tag ) {
+        return false;
+    }
+    if ( a->tag == Expr::ATTRIBUTE ) {
+        if ( a->symbol.compare ( b->symbol ) != 0 ) {
+            return false;
+        }
+    } 
+    return true;
+}
+
+
+bool traceMatch ( Expr*     haystack, 
+                  Expr*     needle ) {
+
+    if ( haystack == nullptr ) {
+        return ( needle == nullptr );
+    }
+    if ( needle == nullptr ) {
+        return ( haystack == nullptr );
+    }
+    if ( ! exprEquals ( haystack, needle ) ) {
+        return false;
+    }
+
+    bool childrenMatch = true;
+    Expr* childHaystack = haystack->child;
+    Expr* childNeedle   = needle->child;
+    while ( childHaystack != nullptr && 
+            childNeedle   != nullptr ) {
+
+         childrenMatch &= traceMatch ( childHaystack, childNeedle );
+         childHaystack = childHaystack->next;
+         childNeedle   = childNeedle->next; 
+    }
+    /* both should be nullptr after the loop */
+    childrenMatch &= ( childHaystack == childNeedle );
+    return childrenMatch;
+}
+
 
 std::string serializeExpr ( Expr* e ) {
     std::stringstream ss;
