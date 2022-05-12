@@ -428,6 +428,28 @@ void setBoolVar ( std::string         cmd,
    else throw ResqlError ( "Expected true or false" );
 }
 
+void setIntVar ( std::string         cmd, 
+                  std::string         search, 
+                  uint16_t&               var,
+                  bool&               doneAction,
+                  std::stringstream&  out ) {
+
+   cmd.erase(remove(cmd.begin(), cmd.end(), ' '), cmd.end());
+   auto find = cmd.rfind ( search );
+   if ( find == std::string::npos ) return;
+   doneAction = true;
+   if ( cmd.length() == search.length() ) {
+       out << var << std::endl;
+       return;
+   } 
+   if ( cmd.at ( search.length() ) != '=' ) {
+       throw ResqlError ( "Expected varname=value" );
+   }
+   std::string val = cmd.substr ( search.length()+1 );
+   
+   var = uint16_t(std::stoi(val));
+}
+
 
 ControlResult processControl ( std::string  line, 
                                Database&    db,
@@ -436,7 +458,7 @@ ControlResult processControl ( std::string  line,
     std::stringstream out;
     setBoolVar ( line, "showplan", config.showPlan, actionDone, out );       
     setBoolVar ( line, "tofile",   config.writeResultsToFile, actionDone, out );       
-    setBoolVar ( line, "parallel", config.jit.parallel, actionDone, out );       
+    setIntVar ( line, "threads", config.jit.num_threads, actionDone, out );    
     setBoolVar ( line, "showperf", config.jit.printPerformance, actionDone, out );       
     setBoolVar ( line, "showasm",  config.jit.printAssembly, actionDone, out );       
     setBoolVar ( line, "showfln",  config.jit.printFlounder, actionDone, out );       
