@@ -41,6 +41,7 @@ Commands
   tables         show tables from current database
   emitmc=true    assemble via asmjit
   emitmc=false   assemble via nasm
+  threads=4		 use 4 threads for execution
   tofile=true    write query results to file
                  qres.tbl (server)
   exec file.sql  execute file with SQL statements 
