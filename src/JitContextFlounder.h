@@ -48,7 +48,7 @@ struct JitConfig {
     bool printPerformance = false;
     
     /* Number of threads used for execution */
-    uint16_t num_threads = 1U;
+    uint16_t numThreads = 1U;
     
     /* Emit machine code directly (true) or use nasm     *
      * assembler (false).                                */
@@ -59,7 +59,7 @@ struct JitConfig {
     
     template < class Archive >
     void serialize ( Archive& ar ) {
-        ar ( printAssembly, printFlounder, printPerformance, emitMachineCode, optimizeFlounder );
+        ar ( printAssembly, printFlounder, printPerformance, numThreads, emitMachineCode, optimizeFlounder );
     } 
 };
 
@@ -207,7 +207,7 @@ public:
 
 
     size_t numThreads() {
-        return config.num_threads;
+        return config.numThreads;
     }
 
 
@@ -415,20 +415,20 @@ public:
         Timer tExec = Timer();
         if ( config.emitMachineCode ) {
             /* execute binary from asmjit */
-            if ( config.num_threads > 1U ) {
-            	/* start threads */
-            	auto threads = std::vector<std::thread>{};
-            	threads.resize(config.num_threads);
-            	for (auto thread_id = 0U; thread_id < config.num_threads; ++thread_id)
-            	{
-            		threads[thread_id] = std::thread( &Emitter::execute, std::ref ( mCodeEmitter ) );
-            	}
-            	
-            	/* wait for threads to finish */
-            	for (auto& thread : threads)
-            	{
-            		thread.join();
-            	}
+            if ( config.numThreads > 1U ) {
+                /* start threads */
+                auto threads = std::vector<std::thread>{};
+                threads.resize(config.numThreads);
+                for (auto thread_id = 0U; thread_id < config.numThreads; ++thread_id)
+                {
+                    threads[thread_id] = std::thread( &Emitter::execute, std::ref ( mCodeEmitter ) );
+                }
+                
+                /* wait for threads to finish */
+                for (auto& thread : threads)
+                {
+                    thread.join();
+                }
             } 
             else {
                 mCodeEmitter.execute();
