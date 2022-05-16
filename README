@@ -5,6 +5,19 @@ Authors: Henning Funke <henning.funke@cs.tu-dortmund.de>
 
 Query compilation-based database system with low compilation times.
 
+Research
+  ReSQL and Flounder are used as prototype systems for database 
+  research. This research includes the following publications:
+   
+  Funke, Henning, Jan Mühlig, and Jens Teubner. "Low-latency query 
+  compilation." The VLDB Journal (2022).
+
+  Funke, Henning, and Jens Teubner. "Low-latency compilation of SQL 
+  queries to machine code." Proceedings of the VLDB Endowment (2021).
+
+  Funke, Henning, Jan Mühlig, and Jens Teubner. "Efficient 
+  generation of machine code for query compilers." DaMoN (2020).
+
 Build
   First make sure that the libraries and tools are available.  
   Then use 'make' in this folder. Developed and tested under 
@@ -41,7 +54,7 @@ Commands
   tables         show tables from current database
   emitmc=true    assemble via asmjit
   emitmc=false   assemble via nasm
-  threads=4		 use 4 threads for execution
+  threads=4      use 4 threads for execution
   tofile=true    write query results to file
                  qres.tbl (server)
   exec file.sql  execute file with SQL statements 
@@ -57,4 +70,3 @@ ReSQL understands the following commands (for example)
 
 Known Issues
   - Memory for Expr ist not freed.
-  - "warning: unused variable 'query'"
