@@ -413,29 +413,29 @@ public:
  
     void execute() {
         Timer tExec = Timer();
-        if ( config.emitMachineCode ) {
-            /* execute binary from asmjit */
-            if ( config.numThreads > 1U ) {
-                /* start threads */
+
+        /* execute binary query */
                 auto threads = std::vector<std::thread>{};
                 threads.resize(config.numThreads);
-                for (auto thread_id = 0U; thread_id < config.numThreads; ++thread_id)
-                {
+        for (auto thread_id = 0U; thread_id < config.numThreads; ++thread_id) {
+
+            /* asmjit */
+            if ( config.emitMachineCode ) {
                     threads[thread_id] = std::thread( &Emitter::execute, std::ref ( mCodeEmitter ) );
                 }
                 
+            /* nasm */
+            else {
+                threads[thread_id] = std::thread ( nasmJitFunc );
+            }
+        }
+        
                 /* wait for threads to finish */
-                for (auto& thread : threads)
-                {
+        for (auto& thread : threads) {
                     thread.join();
                 }
-            } 
-            else {
-                mCodeEmitter.execute();
-            }
-        } else {
-            /* execute binary from nasm und unmap */
-            nasmJitFunc();
+
+        if ( !config.emitMachineCode ) {
             munmap ( (void*) nasmJitFunc, funcSize );
         }
         report.executionTime = tExec.get();
