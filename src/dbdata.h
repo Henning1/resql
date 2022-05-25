@@ -19,10 +19,11 @@
 const size_t align = 64;
 
 
+
 struct DataBlock {
 
 
-    static const size_t Size = 2 << 20;
+    static size_t Size;
 
     
     size_t _contentSize = 0;

@@ -20,6 +20,9 @@
 #include "network/handler.h"
 
 
+size_t DataBlock::Size = 2 << 20;
+
+
 enum ExecMode {
     SERVER,
     CLIENT,

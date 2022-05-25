@@ -4,6 +4,9 @@
 #include "test_queries.h"
 
 
+size_t DataBlock::Size = 2 << 20;
+
+
 void runTests() {
     
     std::cout << "Test Datatypes" << std::endl;  
@@ -33,6 +36,14 @@ int main() {
 
     /* test with asmjit */
     testConfig.jit.emitMachineCode = true;
+    runTests();
+    
+    /* test with small blocks (1024 bytes) */
+    DataBlock::Size = 2 << 10;
+    runTests();
+    
+    /* test parallel */
+    testConfig.jit.numThreads = 8;
     runTests();
 
     return 0;
