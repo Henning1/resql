@@ -4,13 +4,10 @@
 
 struct HashJoinState {
 
-
     /* synchronization point after build is finished */
     std::latch _syncPointBuild;
 
-  
     HashJoinState ( size_t numThreads ) : _syncPointBuild ( numThreads ) {} 
-
 
     static void syncBuild ( HashJoinState* state ) {
         state->_syncPointBuild.arrive_and_wait();
@@ -89,7 +86,7 @@ public:
     
 
     void defineExpressions ( ExpressionContext& ctx ) {
-	ctx.define ( _equalities );
+        ctx.define ( _equalities );
     }
 
     

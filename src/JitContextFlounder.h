@@ -15,6 +15,7 @@
 #include <cstring>
 #include <sys/wait.h>
 #include <thread>
+#include <latch>
 
 #include "flounder/flounder.h"
 #include "flounder/translate.h"
@@ -34,6 +35,50 @@
  * spawn_thread (..) used when  machine code is      *
  * generated via nasm.                               */
 extern char **environ;
+
+/* Guard that makes sections of IR code single threaded.    *
+ *                                                          *
+ * By default the query code is executed in parallel.       *
+ * Sections that do not have a parallel implementation yet  *
+ * have to be guarded, e.g. pipelines with aggregations.    */
+struct SingleThreadGuard {
+
+    std::atomic<bool> singleThreadFlag = true;
+
+    std::latch latchSyncAfter;
+
+    ir_node* endSingleThreadLabel = nullptr;
+
+    SingleThreadGuard ( size_t numThreads ) : latchSyncAfter ( numThreads ) {} 
+
+    static bool getSingleThreadFlag ( SingleThreadGuard* state ) {
+        bool expected = true;
+        bool wasFirstThread = state->singleThreadFlag.compare_exchange_strong ( expected, false );
+        return wasFirstThread;
+    }
+
+    static void syncAfter ( SingleThreadGuard* state ) {
+        state->latchSyncAfter.arrive_and_wait();
+    }
+
+    void open ( ir_node* root ) {
+        ir_node* isFirstThread = vreg8 ( "isFirstThread" );
+        addChild ( root, request ( isFirstThread ) );
+        endSingleThreadLabel = idLabel ( "endSingleThread" );
+        addChild ( root, mcall1 ( isFirstThread, (void*) &getSingleThreadFlag, constAddress ( this ) ) );
+        addChild ( root, cmp ( isFirstThread, constInt8 (0) ) );
+        addChild ( root, je ( endSingleThreadLabel ) );
+        addChild ( root, clear ( isFirstThread ) );
+    }
+
+    void close ( ir_node* root ) {
+        addChild ( root, placeLabel ( endSingleThreadLabel ) );
+        ir_node* foo = vreg64 ( "foo_sync" );
+        addChild ( root, request ( foo ) );
+        addChild ( root, mcall1 ( foo, (void*) &syncAfter, constAddress ( this ) ) );
+        addChild ( root, clear ( foo ) );
+    }
+};
 
 
 /* Represents a configuration for the JIT  *
@@ -415,25 +460,25 @@ public:
         Timer tExec = Timer();
 
         /* execute binary query */
-                auto threads = std::vector<std::thread>{};
-                threads.resize(config.numThreads);
+        auto threads = std::vector<std::thread>{};
+        threads.resize(config.numThreads);
         for (auto thread_id = 0U; thread_id < config.numThreads; ++thread_id) {
 
             /* asmjit */
             if ( config.emitMachineCode ) {
-                    threads[thread_id] = std::thread( &Emitter::execute, std::ref ( mCodeEmitter ) );
-                }
-                
+                threads[thread_id] = std::thread( &Emitter::execute, std::ref ( mCodeEmitter ) );
+            } 
+
             /* nasm */
             else {
                 threads[thread_id] = std::thread ( nasmJitFunc );
             }
         }
         
-                /* wait for threads to finish */
+        /* wait for threads to finish */
         for (auto& thread : threads) {
-                    thread.join();
-                }
+            thread.join();
+        }
 
         if ( !config.emitMachineCode ) {
             munmap ( (void*) nasmJitFunc, funcSize );
