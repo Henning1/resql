@@ -19,10 +19,11 @@
 const size_t align = 64;
 
 
+
 struct DataBlock {
 
 
-    static const size_t Size = 2 << 20;
+    static size_t Size;
 
     
     size_t _contentSize = 0;
@@ -237,7 +238,11 @@ struct Relation {
     
         AppendIterator ( Relation* rel ) 
             : Step ( rel->_schema._tupSize ), rel ( rel ) {
-    
+
+            if ( Step > DataBlock::Size ) {
+                throw ResqlError ( "Tuple size larger than block size." );
+            }
+
             if ( rel->_dataBlocks.size() == 0 ) {
                 _blockIndex = -1;
             }

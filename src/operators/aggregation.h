@@ -1,5 +1,16 @@
 
 
+
+struct AggregationState {
+    
+    SingleThreadGuard guard;
+
+    AggregationState ( size_t numThreads ) : guard ( numThreads ) {} 
+
+};
+
+
+
 /**
  * @brief Aggregation operator.
  */
@@ -31,6 +42,13 @@ public:
     Schema _entrySchema;
 
 
+    /* state that concerns the aggregation during execution */
+    std::unique_ptr < AggregationState > _state;
+
+
+    ir_node* endSingleThreadLabel;
+
+
     virtual std::string name() { return "Aggregation"; };
 
 
@@ -54,9 +72,9 @@ public:
 
     void defineExpressions ( ExpressionContext& ctx ) {
         _splitAggExpr = splitAverages ( _aggExpr );
-	ctx.define ( _groupExpr );
-	ctx.define ( _splitAggExpr );
-	ctx.define ( _aggExpr );
+        ctx.define ( _groupExpr );
+        ctx.define ( _splitAggExpr );
+        ctx.define ( _aggExpr );
     }
 
     
@@ -137,6 +155,8 @@ public:
     virtual void produceFlounder ( JitContextFlounder& ctx,
                                    SymbolSet           request ) {
         
+        _state = std::make_unique < AggregationState > ( ctx.numThreads() );
+
         SymbolSet aggReq   = extractRequiredAttributes ( _aggExpr ); 
         SymbolSet groupReq = extractRequiredAttributes ( _groupExpr ); 
         _child->produceFlounder ( ctx, symbolSetUnion ( aggReq, groupReq ) );
@@ -217,10 +237,11 @@ public:
         return result;
     }
 
-
     virtual void consumeFlounder ( JitContextFlounder& ctx ) {
         
         ctx.comment ( " --- Hash aggregation" );
+
+        _state->guard.open ( ctx.pipeHeader );
 
         ValueSet groupVals = evalExpressions ( _groupExpr, ctx );
         ValueSet aggVals   = evalExpressions ( _splitAggExpr, ctx );
@@ -313,9 +334,12 @@ public:
         
         } closeScanLoop ( scan, ctx );
 
+        _state->guard.close ( ctx.pipeFooter );
+
         if ( ctx.rel.innerScanCount == 0 ) {
             ctx.closePipeline();
-        } 
+        }     
+
     }
         
 };

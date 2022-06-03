@@ -2,6 +2,14 @@
 #include "expressions.h"
 
 
+struct OrderByState {
+    
+    SingleThreadGuard guard;
+
+    OrderByState ( size_t numThreads ) : guard ( numThreads ) {} 
+};
+
+
 class OrderByOp : public RelOperator {
 
 public:
@@ -15,6 +23,10 @@ public:
     std::vector < OrderRequest > _orderRequests;
 
     
+    /* state that concerns the aggregation during execution */
+    std::unique_ptr < OrderByState > _state;
+    
+
     /* limit for limit clause */
     size_t _limit;
     bool   _hasLimitClause;
@@ -84,7 +96,11 @@ public:
     void produceFlounder ( JitContextFlounder&  ctx, 
                            SymbolSet            request ) {
   
+        _state = std::make_unique < OrderByState > ( ctx.numThreads() );
+
         _child->produceFlounder ( ctx, request );
+
+        _state->guard.open ( ctx.codeTree );
 
         /* Map orderby expressions to order requests */
         _schema = _child->_schema;
@@ -115,6 +131,8 @@ public:
             ) 
         );
         ctx.clear ( foo );
+        
+        _state->guard.close ( ctx.codeTree );
     }
  
  

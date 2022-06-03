@@ -1,5 +1,32 @@
 
 
+
+struct Dematerializer {
+
+    ir_node* _tupleAddress;
+    Schema _schema;
+    Values::MaterializeConfig _matConfig;
+
+    Dematerializer ( ir_node* tupleAddress,
+                     Schema& schema,
+                     Values::MaterializeConfig& matConfig )
+                     : _tupleAddress ( tupleAddress ),
+                       _schema ( Schema ( schema._attribs, matConfig.stringsByVal ) ),
+                       _matConfig ( matConfig )
+    {}
+
+    ir_node* dematerialize ( Attribute& a, JitContextFlounder& ctx ) {
+        size_t offset = _schema.getOffsetInTuple ( a.name );
+        ir_node* valueReg = loadToReg ( a.type, _tupleAddress, offset, _matConfig, ctx );
+        return valueReg;
+    }
+
+    /* how is dematerializer passed to expression eval? */
+    /*  ?? pass to evalexpressions ( does not really work because of multiple dematerializers ) */
+    /*  ?? "global" map from expressions to dematerializers */
+};
+
+
 struct ScanLoop {
     std::size_t step;
     ir_node* tupleCursor;
